@@ -1,37 +1,31 @@
-﻿using System.Text;
+﻿using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace LottoProject
 {
-    internal class Program
+    public partial class MainWindow : Window
     {
-        static void Main(string[] args)
+        public MainWindow()
         {
-            Console.WriteLine("Hello, World!");
-            int[] meineZahlen = { 1, 12, 34, 45, 7, 11 };
+            InitializeComponent();
+        }
 
-            //Lotto meinlotto = new Lotto(meineZahlen);
-            //meinlotto.Ziehen();
-            //meinlotto.Treffer(meineZahlen, meinlotto.gezogen);
+        private void btnStart_Click(object sender, RoutedEventArgs e)
+        {
+            lstTreffer.Items.Clear();
             int[] meineTreffer = new int[7];
             int meingeld = 2000;
-
             Random userRandom = new Random();
+            int[] meineZahlen = new int[6];
+
             for (int i = 0; i < 1000; i++)
             {
-
                 for (int j = 0; j < meineZahlen.Length; j++)
                 {
                     int meineZahl = userRandom.Next(1, 50);
-                    while (meineZahlen.Contains(meineZahl))
+                    while (meineZahlen.Take(j).Contains(meineZahl))
                     {
                         meineZahl = userRandom.Next(1, 50);
                     }
@@ -39,35 +33,57 @@ namespace LottoProject
                 }
 
                 Lotto meinlotto = new Lotto(meineZahlen);
-                meingeld = meingeld - 5;
+                meingeld -= 5;
 
                 switch (meinlotto.anzahlTreffer)
                 {
-                    case 3:
-                        meingeld += 10;
-                        break;
-                    case 4:
-                        meingeld += 42;
-                        break;
-                    case 5:
-                        meingeld += 3508;
-                        break;
-                    case 6:
-                        meingeld += 1000000;
-                        break;
-                    default:
-                        meingeld -= 5;
-                        break;
-
+                    case 3: meingeld += 10; break;
+                    case 4: meingeld += 42; break;
+                    case 5: meingeld += 3508; break;
+                    case 6: meingeld += 1000000; break;
+                    default: meingeld -= 5; break;
                 }
-                meineTreffer[meinlotto.anzahlTreffer]++;
 
+                meineTreffer[meinlotto.anzahlTreffer]++;
             }
+
             for (int i = 0; i < meineTreffer.Length; i++)
             {
-                Console.WriteLine($"{i:00} Treffer: {meineTreffer[i]} Mal");
+                lstTreffer.Items.Add($"{i:00} Treffer: {meineTreffer[i]} Mal");
             }
-            Console.WriteLine($"Du hast noch {meingeld}");
+
+            txtGeld.Text = $"Endguthaben: {meingeld} €";
+        }
+    }
+
+    public class Lotto
+    {
+        public int[] gezogen { get; private set; } = new int[6];
+        public int anzahlTreffer { get; private set; }
+
+        public Lotto(int[] tipp)
+        {
+            Ziehen();
+            TrefferBerechnen(tipp);
+        }
+
+        private void Ziehen()
+        {
+            Random rnd = new Random();
+            for (int i = 0; i < gezogen.Length; i++)
+            {
+                int zahl = rnd.Next(1, 50);
+                while (gezogen.Take(i).Contains(zahl))
+                {
+                    zahl = rnd.Next(1, 50);
+                }
+                gezogen[i] = zahl;
+            }
+        }
+
+        private void TrefferBerechnen(int[] tipp)
+        {
+            anzahlTreffer = tipp.Count(z => gezogen.Contains(z));
         }
     }
 }

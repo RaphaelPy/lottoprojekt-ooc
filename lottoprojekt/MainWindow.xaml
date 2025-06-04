@@ -1,12 +1,17 @@
-﻿<Window x:Class="lottoprojekt.MainWindow"
+﻿<Window x:Class="LottoProject.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:lottoprojekt"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="Lotto Simulation" Height="400" Width="500">
+    <Grid Margin="10">
+        <StackPanel>
+            <TextBlock Text="Lotto Simulation" FontSize="24" FontWeight="Bold" TextAlignment="Center" Margin="0,0,0,20"/>
 
+            <Button Name="btnStart" Content="Ziehung starten" Height="40" Click="btnStart_Click"/>
+
+            <ListBox Name="lstTreffer" Margin="0,20,0,10" Height="150"/>
+
+            <TextBlock Name="txtGeld" FontSize="16" FontWeight="SemiBold" TextAlignment="Center"/>
+
+        </StackPanel>
     </Grid>
 </Window>
