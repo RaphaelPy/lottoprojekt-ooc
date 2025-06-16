@@ -11,19 +11,19 @@
 
 ## 👥 Rollenverteilung
 
-### 👤 Luca Pelka – GUI-Entwicklung
+### 👤 Luca Pelka (A)– GUI-Entwicklung
 - Umsetzung der Oberfläche mit Windows Forms / WPF  
 - Layoutgestaltung: Fenster, Buttons, Eingabefelder, Ergebnisanzeige  
 - Eventhandling: Ziehungs-Button, Reset-Funktion  
 - Design der Benutzerführung  
 
-### 👤 Alexander Schneider – Lotto-Logik
+### 👤 Alexander Schneider (B) – Lotto-Logik
 - Ziehung von 6 zufälligen, eindeutigen Zahlen (1–49)  
 - Vergleich der Benutzerzahlen mit den gezogenen Zahlen  
 - Gewinnermittlung: Treffer zählen und Gewinnklasse zuordnen  
 - Eingabeprüfung auf Format, Anzahl und Bereich  
 
-### 👤 Raphael Kreisel – Integration, Validierung & Testing
+### 👤 Raphael Kreisel (C)– Integration, Validierung & Testing
 - Implementierung der Eingabevalidierung (z. B. keine Duplikate)  
 - Mitentwicklung der Gewinnlogik & Testszenarien  
 - Integration von GUI ↔ Logik (Datenaustausch prüfen)  
@@ -42,7 +42,7 @@
 | **Mo, 9. Juni**  | 2h     | Gewinnermittlung programmiert (B), GUI-Ziehung implementiert (A), Eingabeprüfung und Testfälle umgesetzt (C) |
 | **Mi, 11. Juni** | 3h     | Ergebnisanzeige + Reset (A), Gewinnklassen finalisiert (B), Integration & Fehlerprotokoll (C) |
 | **Fr, 13. Juni** | 1h     | Bugfixing & Feinschliff (alle), Layout verbessern (A), Code kommentieren (B), Reset testen & Fehler sammeln (C) |
-| **Mo, 16. Juni** | 1.5h   | Screenshots, Dokumentation & Präsentation vorbereitet (alle), Code sauber übergeben (B), PowerPoint erstellt (C) |
+
 
 ---
 
