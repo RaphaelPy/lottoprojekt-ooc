@@ -1,93 +1,121 @@
-﻿using System;                         // Grundlegende Typen und Methoden
-using System.Collections.Generic;     // Queue<T>, Dictionary<K,V>
-using System.Linq;                    // LINQ-Erweiterungsmethoden
-using System.Windows;                 // WPF-Basisklassen (Window, MessageBox)
-using System.Windows.Controls;        // WPF-Steuerelemente (Button, TextBox)
-using System.Windows.Media;           // Brushes
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 
-namespace LottoSpielfeld
+namespace LottoSpiel
 {
-    // Code-Behind für das Hauptfenster
     public partial class MainWindow : Window
     {
-        private const int MaxZahl = 49;           // Höchste Zahl im Lotto
-        private const int MaxAuswahl = 6;         // Maximal auswählbare Zahlen
-        private const decimal TicketPreis = 15m;  // Preis pro Tippfeld
+        // Konstante Werte
+        private const int MaxZahl = 49;         // Höchste Zahl im Spielfeld
+        private const int MaxAuswahl = 6;       // Spieler darf 6 Zahlen wählen
+        private const decimal TicketPreis = 15; // Preis pro Runde
 
-        private readonly Queue<int> ausgewaehlt = new();          // Warteschlange für Auswahl
-        private readonly Dictionary<int, Button> buttonMap = new(); // Map Zahl → Button
-        private readonly Random rnd = new();                      // Zufallszahlengenerator
+        // Speichert ausgewählte Zahlen
+        private Queue<int> ausgewaehlt = new();
 
-        private int? superzahlManuell = null;  // Optional manuell gesetzte Superzahl
+        // Button-Zuordnung für Spielfeld und Superzahl
+        private Dictionary<int, Button> buttonMap = new();
+        private Dictionary<int, Button> superzahlButtons = new();
 
-        // Konstruktor: initialisiert Komponenten und erzeugt das Spielfeld
+        // Wenn der Spieler eine Superzahl wählt
+        private int? superzahlManuell = null;
+
         public MainWindow()
         {
-            InitializeComponent();  // Lädt XAML-Definition
-            ErzeugeSpielfeld();     // Baut die Zahl-Buttons dynamisch
+            InitializeComponent();
+            ErzeugeSpielfeld();
+            ErzeugeSuperzahlFeld();
         }
 
-        // Erzeugt 49 Buttons mit Zahl und rundem Style
+        // Erstellt das Zahlenfeld 1–49
         private void ErzeugeSpielfeld()
         {
-            var style = (Style)FindResource("NumberButtonStyle"); // Holt Style aus XAML
-
             for (int i = 1; i <= MaxZahl; i++)
             {
                 var btn = new Button
                 {
-                    Content = i.ToString(),    // Anzeigen der Zahl
-                    Tag = i,                   // Speichern der Zahl
-                    Style = style              // Anwenden des runden Styles
+                    Content = i.ToString(),
+                    Tag = i,
+                    Margin = new Thickness(2)
                 };
-                btn.Click += Zahl_Click;        // Klick-Eventhandler
-                ButtonGrid.Children.Add(btn);   // Einfügen ins UniformGrid
-                buttonMap[i] = btn;             // In Map speichern
+                btn.Click += Zahl_Click;
+                ButtonGrid.Children.Add(btn);
+                buttonMap[i] = btn;
             }
         }
 
-        // Klick auf eine Zahl: auswäh-len bzw. abwählen
+        // Erstellt Buttons für Superzahl 0–9
+        private void ErzeugeSuperzahlFeld()
+        {
+            for (int i = 0; i <= 9; i++)
+            {
+                var btn = new Button
+                {
+                    Content = i.ToString(),
+                    Tag = i,
+                    Width = 30,
+                    Margin = new Thickness(2)
+                };
+                btn.Click += Superzahl_Click;
+                SuperzahlGrid.Children.Add(btn);
+                superzahlButtons[i] = btn;
+            }
+        }
+
+        // Wenn ein Superzahl-Button geklickt wird
+        private void Superzahl_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = (Button)sender;
+            int zahl = (int)btn.Tag;
+
+            superzahlManuell = zahl;
+
+            // Nur 1 Button markieren
+            foreach (var b in superzahlButtons.Values)
+                b.ClearValue(Button.BackgroundProperty);
+
+            btn.Background = Brushes.Orange;
+        }
+
+        // Wenn eine Zahl (1–49) geklickt wird
         private void Zahl_Click(object sender, RoutedEventArgs e)
         {
-            var btn = (Button)sender;           // Angeclickter Button
-            int zahl = (int)btn.Tag;            // Gelesene Zahl aus Tag
+            var btn = (Button)sender;
+            int zahl = (int)btn.Tag;
 
             if (ausgewaehlt.Contains(zahl))
             {
-                // Ist bereits ausgewählt → entfernen
-                var neueQueue = new Queue<int>(ausgewaehlt.Where(x => x != zahl));
-                ausgewaehlt.Clear();
-                foreach (var z in neueQueue) ausgewaehlt.Enqueue(z);
-                btn.ClearValue(Button.BackgroundProperty); // Hintergrund zurücksetzen
+                ausgewaehlt = new Queue<int>(ausgewaehlt.Where(x => x != zahl));
+                btn.ClearValue(Button.BackgroundProperty);
             }
             else
             {
-                // Noch nicht ausgewählt, aber schon 6 in der Queue?
                 if (ausgewaehlt.Count >= MaxAuswahl)
                 {
-                    int entfernt = ausgewaehlt.Dequeue();       // Älteste Zahl entfernen
+                    int entfernt = ausgewaehlt.Dequeue();
                     buttonMap[entfernt].ClearValue(Button.BackgroundProperty);
                 }
 
-                ausgewaehlt.Enqueue(zahl);              // Neue Zahl hinzufügen
-                btn.Background = Brushes.LightGreen;    // Markierungs-Farbe
+                ausgewaehlt.Enqueue(zahl);
+                btn.Background = Brushes.LightGreen;
             }
         }
 
-        // Zufällige Auswahl von 6 verschiedenen Zahlen
+        // Zufällige Auswahl von 6 Zahlen
         private void ZufallAuswahl_Click(object sender, RoutedEventArgs e)
         {
-            // Alte Markierungen entfernen
+            var rnd = new Random();
+            var zahlen = Enumerable.Range(1, MaxZahl).OrderBy(_ => rnd.Next()).Take(MaxAuswahl).ToList();
+
             foreach (var z in ausgewaehlt)
                 buttonMap[z].ClearValue(Button.BackgroundProperty);
+
             ausgewaehlt.Clear();
 
-            // 6 Zufallszahlen aus 1–49
-            var zahlen = Enumerable.Range(1, MaxZahl)
-                                   .OrderBy(_ => rnd.Next())
-                                   .Take(MaxAuswahl);
-
-            // In Queue packen und optisch markieren
             foreach (var z in zahlen)
             {
                 ausgewaehlt.Enqueue(z);
@@ -95,131 +123,124 @@ namespace LottoSpielfeld
             }
         }
 
-        // Öffnet InputBox für manuelle Superzahl
-        private void BtnSuperzahl_Click(object sender, RoutedEventArgs e)
-        {
-            var input = Microsoft.VisualBasic.Interaction.InputBox(
-                "Gib eine Superzahl (1–49) ein oder leer lassen:",
-                "Superzahl", "");
-
-            if (int.TryParse(input, out int s) && s >= 1 && s <= MaxZahl)
-            {
-                superzahlManuell = s;               // Manuell gesetzte Superzahl speichern
-                MessageBox.Show($"Superzahl gesetzt: {s}");
-            }
-            else if (string.IsNullOrWhiteSpace(input))
-            {
-                superzahlManuell = null;            // Keine Superzahl
-                MessageBox.Show("Keine Superzahl gewählt.");
-            }
-            else
-            {
-                MessageBox.Show("Ungültige Eingabe."); // Fehlerhinweis
-            }
-        }
-
-        // Setzt alles zurück auf Startzustand
-        private void BtnReset_Click(object sender, RoutedEventArgs e)
-        {
-            // Entfernt Markierungen aller ausgewählten Buttons
-            foreach (var z in ausgewaehlt)
-                buttonMap[z].ClearValue(Button.BackgroundProperty);
-
-            ausgewaehlt.Clear();       // Queue leeren
-            superzahlManuell = null;   // Manuelle Superzahl löschen
-            TxtGewinn.Text = "";       // Anzeige leeren
-            TxtGesamtGewinn.Text = "";
-        }
-
-        // Startet die Ziehung über die angegebene Rundenanzahl
+        // Wenn „Ziehung starten“ gedrückt wird
         private void ZiehungStarten_Click(object sender, RoutedEventArgs e)
         {
-            // Validierung: exakt 6 Zahlen ausgewählt?
             if (ausgewaehlt.Count != MaxAuswahl)
             {
                 MessageBox.Show("Bitte genau 6 Zahlen auswählen!");
                 return;
             }
 
-            // Validierung: gültige Rundenanzahl
             if (!int.TryParse(TxtRunden.Text, out int runden) || runden < 1)
             {
-                MessageBox.Show("Bitte eine gültige Rundenanzahl eingeben!");
+                MessageBox.Show("Gib eine gültige Rundenzahl ein!");
                 return;
             }
 
-            var userZahlen = ausgewaehlt.ToList();  // Liste der Tip-Zahlen
+            var userZahlen = ausgewaehlt.ToList();
             decimal gesamtGewinn = 0;
-            string ergebnisse = $"Gespielte Zahlen: {string.Join(", ", userZahlen.OrderBy(n => n))}\n\n";
+            string ergebnisse = $"Gespielte Zahlen: {string.Join(", ", userZahlen.OrderBy(n => n))}\n";
 
-            // Schleife über alle Runden
+            if (superzahlManuell.HasValue)
+                ergebnisse += $"Superzahl: {superzahlManuell.Value}\n\n";
+            else
+                ergebnisse += "Keine Superzahl gewählt.\n\n";
+
+            var statistik = new Dictionary<(int Treffer, bool Super), int>();
+
             for (int i = 1; i <= runden; i++)
             {
-                var gezogen = Ziehung(out int superzahl); // Neue Ziehung
-                if (superzahlManuell.HasValue)
-                    superzahl = superzahlManuell.Value;    // Manuelle Superzahl überschreiben
-
-                var treffer = userZahlen.Intersect(gezogen).ToList(); // Schnittmengen zählen
-                bool hatSuper = userZahlen.Contains(superzahl);       // Superzahl-Treffer?
+                var gezogen = Ziehung(out int superzahl);
+                var treffer = userZahlen.Intersect(gezogen).ToList();
+                bool hatSuper = superzahlManuell.HasValue && superzahl == superzahlManuell.Value;
                 decimal gewinn = GewinnRegeln.BerechneGewinn(treffer.Count, hatSuper);
+                gesamtGewinn += gewinn;
 
-                gesamtGewinn += gewinn;   // aufsummieren
-                ergebnisse += $"Runde {i}: {treffer.Count} Treffer" +
-                              $"{(hatSuper ? " mit Superzahl" : "")} – Gewinn: {gewinn:C}\n";
+                var key = (treffer.Count, hatSuper);
+                if (!statistik.ContainsKey(key))
+                    statistik[key] = 0;
+                statistik[key]++;
+
+                ergebnisse += $"Runde {i}: {treffer.Count} Treffer{(hatSuper ? " + Superzahl" : "")} – Gewinn: {gewinn:C}\n";
             }
 
-            decimal kosten = runden * TicketPreis;                     // Gesamtkosten
-            decimal netto = gesamtGewinn - kosten;                     // Nettobilanz
+            decimal kosten = runden * TicketPreis;
+            decimal netto = gesamtGewinn - kosten;
 
-            // Anzeige in den Textblöcken aktualisieren
+            // Trefferstatistik ausgeben
+            ergebnisse += "\nTrefferstatistik:\n";
+            foreach (var kv in statistik.OrderByDescending(k => k.Key.Treffer))
+            {
+                string zeile = $"{kv.Value}× {kv.Key.Treffer} Treffer";
+                if (kv.Key.Super) zeile += " + Superzahl";
+                ergebnisse += zeile + "\n";
+            }
+
+            // Ergebnis anzeigen
             TxtGewinn.Text = gesamtGewinn > 0
-                ? $"🏆 Gesamtgewinn: {gesamtGewinn:C}"
-                : "Leider kein Gewinn 😢";
+                ? $" Gesamtgewinn: {gesamtGewinn:C}"
+                : "Leider kein Gewinn";
 
             TxtGesamtGewinn.Text = $"Kosten: {kosten:C} – Netto: {(netto >= 0 ? "+" : "")}{netto:C}";
-
-            // Ausführliches Ergebnis-Popup
-            MessageBox.Show(ergebnisse +
-                            $"\nGesamtgewinn: {gesamtGewinn:C}\nKosten: {kosten:C}\nNetto: {netto:C}");
+            TxtErgebnisseBox.Text = ergebnisse;
+            TxtErgebnisseBox.ScrollToEnd();
         }
 
-        // Führt eine einzelne Lotto-Ziehung inkl. Superzahl durch
+        // Eine Lotto-Ziehung durchführen
         private List<int> Ziehung(out int superzahl)
         {
-            var alle = Enumerable.Range(1, MaxZahl).ToList(); // Alle Zahlen 1–49
+            var rnd = new Random();
+            var alle = Enumerable.Range(1, MaxZahl).ToList();
             var gezogen = new List<int>();
 
-            // 6 eindeutige Zahlen ziehen
             while (gezogen.Count < MaxAuswahl)
             {
-                int idx = rnd.Next(alle.Count);
-                gezogen.Add(alle[idx]);
-                alle.RemoveAt(idx);
+                int index = rnd.Next(alle.Count);
+                gezogen.Add(alle[index]);
+                alle.RemoveAt(index);
             }
 
-            // Superzahl aus dem Rest ziehen
-            superzahl = alle[rnd.Next(alle.Count)];
-            gezogen.Sort();  // Sortieren für bessere Lesbarkeit
+            superzahl = rnd.Next(0, 10); // 0–9
+            gezogen.Sort();
             return gezogen;
+        }
+
+        // Alles zurücksetzen
+        private void BtnReset_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var z in ausgewaehlt)
+                buttonMap[z].ClearValue(Button.BackgroundProperty);
+
+            foreach (var b in superzahlButtons.Values)
+                b.ClearValue(Button.BackgroundProperty);
+
+            ausgewaehlt.Clear();
+            superzahlManuell = null;
+            TxtGewinn.Text = "";
+            TxtGesamtGewinn.Text = "";
+            TxtErgebnisseBox.Text = "";
         }
     }
 
-    // Hilfsklasse für Gewinnberechnung anhand Treffer und Superzahl
+    // Gewinnregeln für Lotto
     public static class GewinnRegeln
     {
-        public static decimal BerechneGewinn(int treffer, bool superTreffer) =>
-            (treffer, superTreffer) switch
+        public static decimal BerechneGewinn(int treffer, bool super)
+        {
+            return (treffer, super) switch
             {
-                (2, true)  =>   6m,
-                (3, false) =>  11m,
-                (3, true)  =>  21m,
-                (4, false) =>  50m,
-                (4, true)  => 190m,
-                (5, false) => 4000m,
-                (5, true)  =>12000m,
-                (6, false) =>1000000m,
-                (6, true)  =>12000000m,
-                _          =>    0m,
+                (2, true) => 6,
+                (3, false) => 11,
+                (3, true) => 21,
+                (4, false) => 50,
+                (4, true) => 190,
+                (5, false) => 4000,
+                (5, true) => 12000,
+                (6, false) => 1000000,
+                (6, true) => 12000000,
+                _ => 0
             };
+        }
     }
 }
